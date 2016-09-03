@@ -1,0 +1,8 @@
+data
+checkpoints
+*.tgz
+*.zip
+*.swp
+*.pyc
+*.pkl
+*.tgz.gz
