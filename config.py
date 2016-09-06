@@ -18,7 +18,7 @@ class lang_config(object):
             self.max_words = max(self.max_words, length1, length2)
         self.max_words += 1
 
-        self.batch_size     = 32
+        self.batch_size     = 64
         self.std_init       = 0.02
         self.edim           = 300
         self.max_epoch      = 15
@@ -47,10 +47,10 @@ class con_config(object):
         if len(sources) != len(targets):
             raise "Sources and targets has not same length"
 
-        self.batch_size     = 32
+        self.batch_size     = 16
         self.std_init       = 0.02
         self.edim           = 300
-        self.max_epoch      = 3
+        self.max_epoch      = 10
         self.data_range     = np.array(range(len(sources)))
         self.lr             = 0.05
         self.max_grad_norm  = 40

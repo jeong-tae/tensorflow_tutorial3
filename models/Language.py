@@ -94,13 +94,17 @@ class Language(object):
         self.init_state.eval()
 
         for step, (batch_source, batch_target, batch_target_weights) in tqdm(enumerate(self.data_iteration(self.train_data, True)), desc = 'train', total = N):
-            _, loss =  self.sess.run([self.op, self.loss],
+            _, cost, pred =  self.sess.run([self.op, self.cost, self.preds],
                                 feed_dict = {   self.sources: batch_source,
                                                 self.targets: batch_target,
                                                 self.target_weights: batch_target_weights
                                             })
-            costs += np.sum(loss)
-        return costs/N/self.batch_size
+            if step % 500 == 0:
+                indices = [ np.argmax(p) for p in pred[0] ]
+                sentence = indices_to_sentence(indices, self.idx2word, self.max_words)
+                print(" [*] Prediction: %s" % sentence)
+            costs += np.sum(cost)
+        return costs
 
     def test(self):
         N = len(self.test_range) // self.batch_size
@@ -108,13 +112,13 @@ class Language(object):
         self.init_state.eval()
 
         for step, (batch_source, batch_target, batch_target_weights) in tqdm(enumerate(self.data_iteration(self.test_data, False)), desc = 'test', total = N):
-            loss =  self.sess.run([self.loss],
+            cost =  self.sess.run([self.cost],
                                 feed_dict = {   self.sources: batch_source,
                                                 self.targets: batch_target,
                                                 self.target_weights: batch_target_weights
                                             })
-            costs += np.sum(loss)
-        return costs/N/self.batch_size
+            costs += np.sum(cost)
+        return costs
 
     def run(self, task_name = ''):
         tf.initialize_all_variables().run()
@@ -125,8 +129,8 @@ class Language(object):
             train_cost = self.train()
             test_cost = self.test()
 
-            print("Epoch: %d, Train perplexity: %.3f" % (i+1, math.exp(train_cost)))
-            print("Epoch: %d, Test perplexity: %.3f" % (i+1, math.exp(test_cost)))
+            print("Epoch: %d, Train costs: %.3f" % (i+1, train_cost))
+            print("Epoch: %d, Test costs: %.3f" % (i+1, test_cost))
             if not os.path.exists("checkpoints"):
                 os.mkdir("checkpoints/")
             save_path = self.saver.save(self.sess, "checkpoints/lang.ckpt")
@@ -208,7 +212,7 @@ class Language(object):
                 s1, s2 = data[batch[b]]
 
                 source = sentence_to_wordvecs(s1, self.word2vec, self.max_words, self.edim)
-                target = sentence_to_indices(s1, self.word2idx, self.max_words)
+                target = sentence_to_indices(s1, self.word2idx, self.max_words, True)
                 target_weight = np.sign(target)
 
                 batch_source[b, :, :] = source

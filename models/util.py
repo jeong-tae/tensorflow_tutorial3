@@ -2,20 +2,24 @@ import numpy as np
 import pdb
 
 def trimer(word):
-    return word.replace(".", "").replace("?", "").replace(",", "").replace("'", "").replace('"', "")
+    return word.replace(".", "").replace("?", "").replace(",", "").replace("'", "").replace('"', "").replace("!", "")
 
 def sentence_to_indices(sentence, word2idx, size, is_target = True):
     splits = sentence.split()
+    idx = 0
     if is_target:
         splits = splits + ["<EOS>"]
+        idx = 0
 
     indices = np.zeros((size), np.int32)
-    idx = 0
     for w in splits:
         if trimer(w) == '':
             continue
         try:
-            indices[idx] = word2idx[trimer(w)]
+            if w not in word2idx:
+                indices[idx] = word2idx['<UNK>']
+            else:
+                indices[idx] = word2idx[trimer(w)]
         except(IndexError):
             break
         idx += 1

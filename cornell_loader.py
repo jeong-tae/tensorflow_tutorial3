@@ -2,6 +2,9 @@
 
 import sys
 import os
+from txt_maker import *
+from tqdm import tqdm
+from collections import Counter
 
 def read_file_cornell(fileName):
     a=[]
@@ -35,10 +38,10 @@ def conversation_corpus(line_fname = 'data/dialog/cornell movie-dialogs corpus/m
 
     corpus = []
     count = 0.0
-    for od in order:
+    for idx, od in tqdm(enumerate(order), desc = 'preprocessing', total = len(order)):
         count = count + 1
-        if count % 500 == 0.0:
-            print count/len(order)
+        #if count % 500 == 0.0:
+            #print count/len(order)
         first=lineID.index(od[0])
         temp = []
         for j in range(len(od)):
@@ -85,26 +88,32 @@ def make_data():
             if len(line[i])<5:
                 noUtt = True
                 itr = i
-                print "There is no Utterance on %s" % line[i][0]
-                print "iter : %d" % deg
+                # print "There is no Utterance on %s" % line[i][0]
+                # print "iter : %d" % deg
 
         for i in range(0,len(line)-1):
             if noUtt:
                 if itr-i == 1 or itr-i == 0:
                     continue
-            src.write(line[i][4]+'\n')
+            splited = line[i][4].split()
+            words = [trimer(w) for w in splited]
+            new_line = ' '.join(words).strip()
+            src.write(new_line+'\n')
         for i in range(1,len(line)):
             if noUtt:
                 if itr-i == 0 or itr-i == -1:
                     continue
-            trg.write(line[i][4]+'\n')
+            splited = line[i][4].split()
+            words = [trimer(w) for w in splited]
+            new_line = ' '.join(words).strip()
+            trg.write(new_line+'\n')
         deg = deg + 1
     src.close()
     trg.close()
 
 def make_data_cut(dir_path = 'data/dialog/cornell movie-dialogs corpus/'):
     line_fname = dir_path + 'movie_lines.txt'
-    con_fname = dir_path + 'movie_converstations.txt'
+    con_fname = dir_path + 'movie_conversations.txt'
     corpus = conversation_corpus(line_fname, con_fname)
     
     src = open(dir_path + "source.txt",'w')
@@ -118,17 +127,23 @@ def make_data_cut(dir_path = 'data/dialog/cornell movie-dialogs corpus/'):
             if len(line[i])<5:
                 noUtt = True
                 itr = i
-                print "There is no Utterance on %s" % line[i][0]
-                print "iter : %d" % deg
+                #print "There is no Utterance on %s" % line[i][0]
+                #print "iter : %d" % deg
 
         for i in range(0,len(line)-1):
             if noUtt:
                 continue
-            src.write(line[i][4]+'\n')
+            splited = line[i][4].split()
+            words = [trimer(w) for w in splited]
+            new_line = ' '.join(words).strip()
+            src.write(new_line+'\n')
         for i in range(1,len(line)):
             if noUtt:
                 continue
-            trg.write(line[i][4]+'\n')
+            splited = line[i][4].split()
+            words = [trimer(w) for w in splited]
+            new_line = ' '.join(words).strip()
+            trg.write(new_line+'\n')
         deg = deg + 1
     src.close()
     trg.close()
@@ -144,14 +159,18 @@ def check_no_utterance():
         deg = deg + 1
 
 def build_vocab(sources, targets):
-    word2idx = { '<PAD>':0, '<GO>':1, '<EOS>':2 } # seed
-    idx2word = { 0: '<PAD>', 1: '<GO>', 2: '<EOS>'}
+    word2idx = { '<PAD>':0, '<GO>':1, '<EOS>':2, '<UNK>':3 } # seed
+    idx2word = { 0: '<PAD>', 1: '<GO>', 2: '<EOS>', 3:'<UNK>'}
 
-    train_txt = open(train, 'r').read()
-    test_txt = open(test, 'r').read()
+    train_txt = open(sources, 'r').read()
+    test_txt = open(targets, 'r').read()
 
     tokens = train_txt.split() + test_txt.split()
-    tokens = set(tokens)
+    word_counts = Counter(tokens)
+
+    top_5000 = word_counts.most_common(5000)
+    tokens = [ w for w, c in top_5000 ]
+
     for idx, token in enumerate(tokens):
         word2idx[trimer(token)] = idx + 3
         idx2word[idx + 3] = trimer(token)
@@ -159,24 +178,25 @@ def build_vocab(sources, targets):
 
     return word2idx, idx2word
 
-def load_file_by_lines(fname):
-    return open(fname, 'r').readlines()
+def load_file_by_lines(fname, length = -1):
+    return open(fname, 'r').readlines()[:length]
 
 class CornellLoader(object):
-    def __init__(self, data_dir = '.data/dialog/cornell movie-dialogs corpus/'):
+    def __init__(self, data_dir = 'data/dialog/cornell movie-dialogs corpus/', length = -1):
         source_fname = os.path.join(data_dir, 'source.txt')
         target_fname = os.path.join(data_dir, 'target.txt')        
 
         if os.path.exists(source_fname):
             print(" [*] Load source and target...")
-            self.sources = load_file_by_lines(source_fname)
-            self.targets = load_file_by_lines(target_fname)
+            self.sources = load_file_by_lines(source_fname, length)
+            self.targets = load_file_by_lines(target_fname, length)
             self.word2idx, self.idx2word = build_vocab(source_fname, target_fname)
         else:
             print(" [*] Preprocessing conversation into source and target...")
             make_data_cut()
-            self.sources = load_file_by_lines(source_fname)
-            self.targets = load_file_by_lines(target_fname)
+            print(" [*] Preprocessing done")
+            self.sources = load_file_by_lines(source_fname, length)
+            self.targets = load_file_by_lines(target_fname, length)
             self.word2idx, self.idx2word = build_vocab(source_fname, target_fname)
 
 

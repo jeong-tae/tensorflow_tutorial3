@@ -8,7 +8,7 @@ from tqdm import tqdm as it
 from collections import defaultdict
 
 def trimer(word):
-    return word.replace(".", "").replace("?", "").replace(",", "").replace("'", "").replace('"', "")
+    return word.replace(".", "").replace("?", "").replace(",", "").replace("'", "").replace('"', "").replace("!", "")
 
 def read_words(fname):
     pairs = defaultdict(list)
