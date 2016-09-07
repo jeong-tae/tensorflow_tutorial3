@@ -176,10 +176,8 @@ class Language(object):
                 pred, state = self.sess.run([self.preds, self.last_state], 
                         feed_dict = { self.demo_source: word_input,
                                         self.init_state: state })
-                #import pdb
-                #pdb.set_trace()
-                #sentence.append(random_choice_from_probs(pred[0], temp))
-                sentence.append(np.argmax(pred[0]))
+                sentence.append(random_choice_from_probs(pred[0], temp))
+                #sentence.append(np.argmax(pred[0]))
                 word_input[0, :] = self.word2vec[self.idx2word[sentence[-1]]]
             return sentence
 

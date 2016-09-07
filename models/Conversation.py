@@ -98,10 +98,10 @@ class Conversation(object):
                                             self.target_weights: batch_target_weights
                                         })
 
-            if step % 100 == 0:
-                indices = [ np.argmax(p) for p in pred[0] ]
-                sentence = indices_to_sentence(indices, self.idx2word, self.max_words)
-                print(" [*] sample: %s" % sentence)                
+            #if step % 100 == 0:
+            #    indices = [ np.argmax(p) for p in pred[0] ]
+            #    sentence = indices_to_sentence(indices, self.idx2word, self.max_words)
+            #    print(" [*] sample: %s" % sentence)                
 
             total_costs.append(cost)
         return sum(total_costs)
